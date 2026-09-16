@@ -1,9 +1,29 @@
 # IoT-Enabled UAV Launch Trolley
 <img width="4000" height="3000" alt="20260907_122211" src="https://github.com/user-attachments/assets/b2ab7ad9-4b26-42af-a88e-a00bbd395ad7" />
 
-A custom-designed cart built to solve the high-speed launch constraints ($V_{\text{launch}} \approx 18\text{ m/s}$) of a 2.43 kg MTOW pusher-propeller Search and Rescue (SAR) fixed-wing UAV. 
+### Introduction
+This repository details a project I undertook surrounding a launch mechanism that would be used to get UAV's I build without landing gear into the air. This project was born specifically from the need to find a suitable and safe way to launch a UAV I had designed and manufactured as part of a different project. Errors in the design phase of that UAV mean that to take-off, it needs an airspeed of at least 18m/s and given it weighs 2.43kg and is an aircraft with a pusher configuration sporting a 13" propeller, it is not an aircraft that can be safely hand launched.
 
-The system integrates real-time wheel speed telemetry via an ESP32 microcontroller with an automated, weight-triggered folding linkage mechanism to protect the 13" rear-mounted propeller during takeoff.
+---
+
+### Design and Iterations
+To begin with, I considered many different possible solutions to my launching problem. I researched different launch mechanisms such as bungees, launch rails/catapults, trolleys/carts and even separate landing gear that could be mounted to the airframe and either stay attached or drop off after take-off. Ultimately, I decided to discard all options except the cart idea because they either added unnecessary weight to the airframe which would increase the take-off velocity, involved unnecessary complexity or had the chance of damaging either the launch system itself or the aircraft. The cart idea had the benefit of not adding any weight to the flying mass of the aircraft, being reusable without being damaged and being relatively simple in comparison to some of the other possible ideas.
+
+The cart was designed to be made from easily machinable materials and to minimise the weight without compromising its ability to support the loads that it would realistically be subject to during a take-off run. On top of the plywood base sits the parallel motion linkage used to lower the support pads that hold up the UAV. The parallel motion linkage was designed to have as smooth a motion as possible so it can fold with minimal resistance. This was achieved by using bearings in the major joints of the linkage. It is actuated using a servo operated latch that (when instructed by the microcontroller) lifts a claw, allowing the linkage to fold. The folding element of the cart is actuated by a rubber band seeing as it is a simple and inexpensive mechanism. The support pad section of the cart was designed to be an exact negative mould of the underside of the specific UAV it was meant for to ensure a perfect fit. Underneath the plywood base sits four bearing blocks, two axles and the four wheels. The four wheels are sized to go over small imperfections in the runway surface and roll quickly without being too large that it raises the centre of gravity of the whole setup too high which could case instabilities. I considered adding steering to the cart that would pair up with the rudder channel on the radio used to fly the UAV but ultimately I deciding to omit any steering on the cart in an attempt to simplify the system and not have to deal with extra weight.
+
+---
+
+### Avionics
+
+
+---
+
+### How It Was Built
+The cart is made from four main materials: Plywood, PLA, TPU and aluminium tubes. The chassis of the cart is a 12mm plywood board and acts as the base for which everything mounts to.
+The PLA was used in the majority of the components for the parallel motion linkage, the wheels and the bearing blocks. PLA was used rather than a stronger material like PETG because of manufacturing constraints, namely the fact the my 3D printer struggles to print PETG without it warping. TPU was used in the tyres to provide some cushioning (albeit limited cushioning), the soft support that catches the linkage one it falls and the supports that interface with the airframe  to hold it perfectly. Aluminium tubes were used as axles for all the spinning components and were also used as a light-weight airframe support structure that the support pads mount to. This was done because it was simpler and easier than 3D printing a large PLA piece to mount the airframe supports to.
+Everything is held together with M3 hardware of varying lengths, including heat set inserts. The TPU support pads were glued (using epoxy) to the 8mm aluminium support bars that go under the airframe.
+
+The avionics were separately assembled on a breadboard and coded before being transferred to the cart.
 
 ---
 
@@ -17,11 +37,6 @@ The system integrates real-time wheel speed telemetry via an ESP32 microcontroll
 | **Liftoff Detection** | Pad Limit Switch (GPIO 5) | Instantaneous weight-off-wheels trigger |
 | **Clearance System** | Servo-latch + Rubber-tension Parallel Linkage | Folds support arms flat to allow clearance for 13" pusher prop |
 | **Telemetry Interface** | ESP32 Access Point + Embedded Web Server | Live Web UI streaming speed and state data over Wi-Fi |
-
----
-
-### Design and Manufacture
-
 
 ---
 
@@ -70,8 +85,6 @@ this allows me to connect a mobile device or laptop directly to the trolley to v
 [ Safe Separation ]
      └── 13" pusher prop passes cleanly over folded cart
 ```
----
-## Design Trade-Offs & Alternative Concepts
 ---
 ## Problems Encountered
 Launch system iteration of ideas:
