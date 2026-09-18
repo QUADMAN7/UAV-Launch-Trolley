@@ -1,29 +1,8 @@
 # IoT-Enabled UAV Launch Trolley
 <img width="4000" height="3000" alt="20260907_122211" src="https://github.com/user-attachments/assets/b2ab7ad9-4b26-42af-a88e-a00bbd395ad7" />
 
-### Introduction
-This repository details a project I undertook surrounding a launch mechanism that would be used to get UAV's I build without landing gear into the air. This project was born specifically from the need to find a suitable and safe way to launch a UAV I had designed and manufactured as part of a different project. Errors in the design phase of that UAV mean that to take-off, it needs an airspeed of at least 18m/s and given it weighs 2.43kg and is an aircraft with a pusher configuration sporting a 13" propeller, it is not an aircraft that can be safely hand launched.
-
----
-
-### Design and Iterations
-To begin with, I considered many different possible solutions to my launching problem. I researched different launch mechanisms such as bungees, launch rails/catapults, trolleys/carts and even separate landing gear that could be mounted to the airframe and either stay attached or drop off after take-off. Ultimately, I decided to discard all options except the cart idea because they either added unnecessary weight to the airframe which would increase the take-off velocity, involved unnecessary complexity or had the chance of damaging either the launch system itself or the aircraft. The cart idea had the benefit of not adding any weight to the flying mass of the aircraft, being reusable without being damaged and being relatively simple in comparison to some of the other possible ideas.
-
-The cart was designed to be made from easily machinable materials and to minimise the weight without compromising its ability to support the loads that it would realistically be subject to during a take-off run. On top of the plywood base sits the parallel motion linkage used to lower the support pads that hold up the UAV. The parallel motion linkage was designed to have as smooth a motion as possible so it can fold with minimal resistance. This was achieved by using bearings in the major joints of the linkage. It is actuated using a servo operated latch that (when instructed by the microcontroller) lifts a claw, allowing the linkage to fold. The folding element of the cart is actuated by a rubber band seeing as it is a simple and inexpensive mechanism. The support pad section of the cart was designed to be an exact negative mould of the underside of the specific UAV it was meant for to ensure a perfect fit. Underneath the plywood base sits four bearing blocks, two axles and the four wheels. The four wheels are sized to go over small imperfections in the runway surface and roll quickly without being too large that it raises the centre of gravity of the whole setup too high which could case instabilities. I considered adding steering to the cart that would pair up with the rudder channel on the radio used to fly the UAV but ultimately I deciding to omit any steering on the cart in an attempt to simplify the system and not have to deal with extra weight.
-
----
-
-### Avionics
-
-
----
-
-### How It Was Built
-The cart is made from four main materials: Plywood, PLA, TPU and aluminium tubes. The chassis of the cart is a 12mm plywood board and acts as the base for which everything mounts to.
-The PLA was used in the majority of the components for the parallel motion linkage, the wheels and the bearing blocks. PLA was used rather than a stronger material like PETG because of manufacturing constraints, namely the fact the my 3D printer struggles to print PETG without it warping. TPU was used in the tyres to provide some cushioning (albeit limited cushioning), the soft support that catches the linkage one it falls and the supports that interface with the airframe  to hold it perfectly. Aluminium tubes were used as axles for all the spinning components and were also used as a light-weight airframe support structure that the support pads mount to. This was done because it was simpler and easier than 3D printing a large PLA piece to mount the airframe supports to.
-Everything is held together with M3 hardware of varying lengths, including heat set inserts. The TPU support pads were glued (using epoxy) to the 8mm aluminium support bars that go under the airframe.
-
-The avionics were separately assembled on a breadboard and coded before being transferred to the cart.
+## Project Overview & Goal
+This repository details a project I undertook surrounding a launch mechanism that would be used to get UAV's I build, without landing gear, into the air. This project was born specifically from the need to find a suitable and safe way to launch a UAV I had designed and manufactured as part of a different project. Errors in the design phase of that UAV mean that to take-off, it needs an airspeed of at least 18m/s and given it weighs 2.43kg and is an aircraft with a pusher configuration sporting a 13" propeller, it is not an aircraft that can be safely hand launched.
 
 ---
 
@@ -40,14 +19,44 @@ The avionics were separately assembled on a breadboard and coded before being tr
 
 ---
 
+## Design and Iterations
+To establish the optimal launch method for the aircraft, I began by conducting a trade-off study across several concept architectures. I evaluated bungee systems, launch rails, catapults, and various airframe-mounted landing gear options, including both fixed and jettison-able assemblies. Ultimately, I eliminated catapults, rails, and onboard landing gear because they either imposed weight and drag penalties on the airframe—which directly inflated the required take-off velocity—or introduced high mechanical complexity with a elevated risk of damaging the aircraft during separation. Selecting an external ground support trolley provided the best systems-level solution: it added zero flight mass to the aircraft, offered reusable launch capabilities without airframe fatigue, and delivered a simple, robust footprint for field operations.
+
+The cart chassis was designed to use easily machinable materials. A structural plywood plank acts as the base to which everything is mounted. Atop this base is a parallel-motion linkage engineered to drop the airframe support cradles instantly upon lift-off. To ensure the linkage folded flat with minimal mechanical resistance, I integrated precision ball bearings into all primary pivot joints to eliminate binding. The linkage is held in its elevated position by a servo-operated latch claw controlled by the ESP32. Upon receiving a release command, the servo disengages the claw, allowing a pre-tensioned rubber band to snap the mechanism flat. Using an elastomeric element provided a rapid, high-reliability restoring force without the weight, complexity, or power draw of active motorized retraction. To maximize stability during ground roll, the cradle pads were custom-designed as exact negative moulds of the aircraft's lower fuselage, ensuring a snug, load-distributing fit.
+
+Beneath the main chassis, the running gear consists of dual axles supported by four low-friction bearing blocks. Sizing the wheels required a careful balance between ground clearance and roll stability: they needed to be large enough to roll over minor runway imperfections, yet compact enough to keep the overall centre of gravity low and prevent tipping instabilities during high-speed acceleration. During the initial design phase, I considered adding an active steering system linked directly to the aircraft’s rudder control channel, however, after analysing the failure modes and mass budget, I chose to omit ground steering. Eliminating the extra actuation hardware simplified the system architecture, saved critical weight, and ensured predictable, straight-line tracking driven purely by the aircraft's own thrust line.
+
+---
+
+## Electronics
+To govern the real-time telemetry, safety interlocks, and mechanical release, the trolley utilizes a custom embedded system centred around an ESP32 microcontroller. Power management is handled by an onboard 9V battery paired with a DC-DC buck converter, stepping the voltage down to a regulated 5V rail to reliably power the microcontroller, sensors, and actuation hardware.
+
+The sensing suite consists of two primary inputs designed to feed the onboard kinematics and state tracking logic. A Hall effect sensor tracks wheel rotations to calculate real-time ground speed, while a physical limit switch embedded beneath the support pads acts as a weight-off-wheels sensor to confirm whether the aircraft is actively sitting on the trolley or not. System actuation is intentionally streamlined to minimize power draw and weight, relying on a single high-torque analogue servo. When triggered by the ESP32's safety logic, this servo disengages the primary latching mechanism, allowing the parallel-motion linkage to collapse flat under elastomeric tension.
+
+For field operation and ground crew safety, the human-machine interface incorporates a heavy-duty mechanical arming toggle switch, a visual status LED, and an audible piezo buzzer. Recognizing that bright outdoor sunlight and high-glare field environments can easily obscure visual LED feedback during launch operations, I integrated a buzzer that provides unambiguous audible confirmation when the trolley is armed. This dual-sensory confirmation guarantees that ground operators can definitively verify the system's state before initiating a high-speed take-off run.
+
+
+---
+
+## How It Was Built
+The physical trolley was constructed using a hybrid material selection composed of 12mm structural plywood, 3D-printed PLA, flexible TPU, and lightweight aluminum tubing. A 12mm plywood board forms the central chassis, serving as a flat, rigid structural base to anchor all mechanical linkages, axle blocks, and electronic subassemblies.
+
+The majority of the functional components—including the parallel-motion linkage arms, wheel hubs, and bearing housings—were additive-manufactured using PLA. While PETG offers higher impact resistance, desktop 3D printing constraints (specifically thermal warping on larger geometries) made PLA the more reliable choice for maintaining tight dimensional tolerances across the joint linkages. To complement the rigid PLA parts, flexible TPU was strategically applied where compliance and energy absorption were necessary. TPU was used for the tyres to dampen runway vibrations, for the soft bump-stop that catches the linkage when it snaps flat, and for the airframe support pads that conform to the aircraft's fuselage.
+
+To span the support footprint of the aircraft without adding unnecessary rotating mass or printing oversized plastic parts, I used 8mm aluminium tubing for both the axles and the upper cradle support frame. Utilizing aluminium tubes provided a significantly stiffer, lighter, and simpler structural bridge than attempting to 3D print a massive PLA equivalent. The custom-moulded TPU support pads were permanently bonded to the 8mm aluminium bars using high-strength epoxy. The entire mechanical assembly is secured using M3 hardware, integrating heat-set brass inserts directly into the 3D-printed components to deliver robust, reusable threaded joints that withstand repeated operational loads.
+
+Before final physical assembly, the embedded control hardware and sensor circuits were prototyped and validated on a breadboard. This allowed me to debug the hardware interrupts, refine the ESP32 safety logic, and verify the servo release timing in code prior to mounting the electronics into the trolley chassis.
+
+---
+
 ## Key Mechatronic Features
 
 ### 1. Active Propeller Clearance Mechanism
-Because the aircraft utilizes a large 13" rear-mounted pusher propeller, sitting flat on a traditional cart would result in a propeller strike as the aircraft accelerates past the cart during liftoff.
+Because the aircraft utilizes a large 13" rear-mounted pusher propeller, sitting flat on a traditional cart would result in a propeller strike as the aircraft accelerates past the cart during lift-off.
 
 * **Support Carriage:** Parallel-motion linkage support arms hold the fuselage above the cart frame.
-* **Weight-Off-Wheels Trigger:** A limit switch placed beneath the support pads detect when aerodynamic lift supports the aircraft's weight.
-* **Rapid Retraction:** Upon weight removal, the ESP32 actuates a release servo. Rubber-band tension pulls the parallel linkages down, snapping the support arms completely flat before the spinning 13" prop passes over the cart.
+* **Weight-Off-Wheels Trigger:** A limit switch placed on the rear support pad detects when the aircraft begins to lift off.
+* **Rapid Retraction:** Upon weight removal (and if the velocity is above 18m/s), the ESP32 actuates the release servo. Rubber-band tension pulls the parallel linkages down, snapping the support arms completely flat before the spinning 13" prop passes over the cart.
 
 ### 2. Sensor Integration & Velocity Calculation
 Groundspeed is measured using a Hall effect sensor triggered by a neodymium magnet embedded within one of the trolley wheels.
@@ -58,11 +67,11 @@ Groundspeed is measured using a Hall effect sensor triggered by a neodymium magn
   $$\text{Velocity } (v) = \frac{2 \pi r}{\Delta t}$$
 
   *(Where 'r' is wheel radius)*
-* **Kinematics:** Integrates velocity over time to track overall runway displacement ($d$) and differentiates for acceleration ($a$).
+* **Kinematics:** ESP32 integrates velocity over time to track overall runway displacement ($d$) and differentiates for acceleration ($a$).
 
 ### 3. Wireless IoT Telemetry
-The ESP32 operates as a standalone Wi-Fi Access Point (SoftAP) running a lightweight HTTP/WebSocket web server. 
-this allows me to connect a mobile device or laptop directly to the trolley to view real-time metrics during ground runs.
+The ESP32 operates as a standalone Wi-Fi Access Point running a lightweight HTTP/WebSocket web server. 
+This allows me to connect a mobile device or laptop directly to the trolley to view real-time metrics during ground runs.
 
 ---
 
@@ -87,11 +96,15 @@ this allows me to connect a mobile device or laptop directly to the trolley to v
 ```
 ---
 ## Problems Encountered
-Launch system iteration of ideas:
+**1. 13" Propeller Clearance:** The UAV this trolley was designed for has a pusher design and uses a 13" propeller which is problematic when the UAV needs to take-off because if it were supported by a box on wheels, the angle at which the UAV would have to climb away from the trolley to clear the propeller would be extreme and incredibly difficult to achieve. This left me with two options for the design of the trolley. The first was to design it in such a way that the take-off path of the UAV's propeller would be unobstructed by somehow holding onto the wings instead of the fuselage. The second was to increase the clearance between the trolley and the UAV at the point of take-off. I decided to go with the second option as it offered a solution that was in a smaller and, consequently, lighter package which has the benefit of being easier to transport and for the UAV to accelerate itself and the trolley more quickly (therefore using less runway). To come up with a system to increase the clearance between the UAV and the trolley support pads upon which the UAV sits, I researched different mechanical systems such as scissor lifts but decided to go with a parallel motion linkage as it was simpler and could quickly be actuated to go from its highest point to its lowest point.
 
-**1. 13" Propeller Clearance:** The UAV this trolley was designed for has a pusher design and uses a 13" propeller which is problematic when the UAV needs to take off because if it were supported by a box on wheels, the angle at which the UAV would have to climb away from the trolley would be extreme and incredibly difficult to achieve. This left me with two options for the design of the trolley. The first was to design it in such a way that the take-off path of the UAV's propeller would be unobstructed by somehow holding onto the wings instead of the fuselage. The second was to increase the clearance between the trolley and the UAV at the point of take-off. I decided to go with the second option as it offered a solution that was in a smaller and consequently lighter package which offered the benefit of being easier to transport and making it easier for the UAV to accelerate itself and the trolley more quickly (therefore using less runway). To come up with a system to increase the clearance between the UAV and the trolley suppsort pads upon which the UAV sits, i researched different mechanical systems including scissor lifts and .... but decided to go with a parallel motion linkage as it was simpler and could quickly be actuated to go from its highest point to its lowest point
+**2. Sensor Saturation:** In my initial design of the wheel speed tracking system, I embedded eight evenly spaced neodymium magnets into the wheel hub to maximize velocity measurement resolution. During high-speed testing, however, I discovered that this high-density arrangement only functioned reliably at low speeds under 5 m/s. Beyond this threshold, the rapid rotational frequency overwhelmed the Hall effect sensor's frequency response. The sensor could no longer react quickly enough to detect the magnetic gaps between pulses, causing it to saturate and latch into a continuous detection state.
 
-**2. Sensor Saturation:** In my initial design of the wheel that houses the small neodimyium magnets so that the hall effect sensor can calculate the velocity of the trolley, i included 8 magnets as i wanted a high resolution in the accuracy of the velocity reading seeing as the reading would be updated every one eighth of a rotation but in my testing of this sytem i found that this only worked for low velocities (i.e. <5 m/s). Above this velocity, the magnets would come flying past the hall effect sensor too quickly and would saturate the sensor as it did not have the responsiveness needed to react to the rapid change in whether it could detect a magnets presence or not so at high velocities it would would never detect the absence of a magnet in the rotation of the wheel which led to a calculated velocity of 0 m/s as in the code i included a series of logical steps that would mean if the velocity reading doesn't change in a given amount of time, the trolley must have stopped moving. without this logic gate, once the cart slows to a low velocity and stops, unless the magnet swings past the hall effect sensor very slowly (which is unlikely) it would not update the velocity so the reading would be stuck on the low velocity reading from when the magnet previously passed by. to solve the sensor saturation issue i had to reduce the number of magnets in the wheel to just one so that the trolley could record velocities in the range i would expect the UAV to take off at (up to 25 m/s). In reality this system has never been tested and i have a sneaky feeling that at the higher end of that range (>15m/s, the wheels will be spinning so fast that the sensor will reach saturation again despite the reduction in the number of magnets. This issue could easily be solved by either increasing the diameter of the wheels (but that would have the negative impact of racing the centre of gravity making the UAV more unstable and prone to tipping over whilst taking off) or by adding a separate wheel with magnets that is connected to the main wheels via a gear reduction so that the magnets pass by the hall effect sensor more slowly at high velocities.
+This physical saturation directly interacted with my firmware's safety logic. To prevent the system from holding a stale speed reading after coming to a complete stop, I had programmed a timeout mechanism that reset the calculated velocity to 0 m/s if no pulse interrupts were registered within a set time window. Consequently, when sensor saturation occurred at speed, the lack of toggling state transitions caused the code to interpret the continuous signal as a stopped cart, abruptly dropping the telemetry speed output to 0 m/s mid-run.
+
+To resolve this sensor bandwidth issue, I modified the wheel hub to house only a single neodymium magnet, lowering the pulse frequency enough to accommodate target takeoff velocities up to 25 m/s. While this change successfully restored function for standard testing, a critical evaluation of the system suggests that at the higher end of the operational envelope—exceeding 15 to 18 m/s—the sensor may approach its hardware response limits once again due to the high RPM of the small wheels.
+
+In evaluating future design iterations to eliminate this failure mode entirely, I analyzed two potential engineering solutions. The first option—increasing the main wheel diameter to lower the rotational RPM—was ruled out because a larger wheel elevates the cart's center of gravity, significantly increasing the risk of dynamic tip-over during high-speed acceleration runs. The superior engineering approach would be to integrate a secondary sensor wheel connected to the main axle via a mechanical gear reduction. This would allow the magnets to pass the Hall effect sensor at a lower, controlled frequency during high-speed runs while maintaining a low center of gravity and preserving full signal integrity across the entire operational envelope.
 
 **3. Premature Retraction**
 A bump on a runway could cause the UAV to momentarily bounce off the support pads. If the limit switch opened while accelerating at \(10\text{ m/s}\), the ESP32 would interpret it as a take-off, collapsing the carriage and causing a high-speed prop strike while the drone was still on the cart, potentially damaging the UAV as well as the cart. This was accounted for in the firmware and steps were taken to mitigate this event. I implemented a triple-condition safety interlock in the state machine logic. The ESP32 strictly forbids servo actuation unless two conditions are met simultaneously:
@@ -107,7 +120,8 @@ This instrumented ground support trolley successfully bridges the gap between hi
 Although designed around a specific 2.43 kg fixed-wing SAR airframe, the modular mechatronic architecture serves as a scalable foundation for future Ground Support Equipment across higher-weight unmanned systems.
 
 ---
-
+## Repository structure
+```text
 ├── Firmware/
 │   ├── src/
 │   │   ├── main.cpp          # Core loop, ISRs, and state machine
@@ -121,3 +135,4 @@ Although designed around a specific 2.43 kg fixed-wing SAR airframe, the modular
 ├── Hardware/
 │   └── Wiring_Schematic.pdf  # Pinout diagrams for ESP32, servo, switches, and power
 └── README.md
+```
