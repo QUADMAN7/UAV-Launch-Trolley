@@ -122,17 +122,10 @@ Although designed around a specific 2.43 kg fixed-wing SAR airframe, the modular
 ---
 ## Repository structure
 ```text
-├── Firmware/
-│   ├── src/
-│   │   ├── main.cpp          # Core loop, ISRs, and state machine
-│   │   ├── web_server.cpp    # Wi-Fi AP & WebSocket telemetry streaming
-│   │   └── sensors.cpp       # Hall effect speed calculations & switch filtering
-│   └── platformio.ini        # PlatformIO environment configuration
+├── Firmware
 ├── CAD/
 │   ├── Trolley_Assembly.step # Full mechanical cart assembly
 │   ├── Linkage_Arm.stl       # 3D printable parallel linkage support
 │   └── Wheel_Magnet_Hub.stl  # Custom wheel hub with embedded magnet recess
-├── Hardware/
-│   └── Wiring_Schematic.pdf  # Pinout diagrams for ESP32, servo, switches, and power
 └── README.md
 ```
