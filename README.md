@@ -37,8 +37,18 @@ For field operation and ground crew safety, the human-machine interface incorpor
 
 ---
 ## Firmware & Embedded Systems Overview
+## Electronics & Firmware Logic
 
-The trolley's control system runs on an ESP32, governing real-time telemetry, human-machine safety interlocks, and automated release actuation. Using an AI-augmented engineering workflow to rapidly scaffold and iterate on firmware, I developed a modular, fail-safe architecture: Real-Time Telemetry Pipeline: Processes high-frequency wheel rotation data using microsecond hardware interrupts (IRAM_ATTR). Signal noise is mitigated using an exponential moving average (EMA) velocity filter ($\alpha = 0.2$) paired with an acceleration clamp ($\pm 20\text{ m/s}^2$).Standalone Web Dashboard: Configures the ESP32 as a Wi-Fi Access Point hosting an asynchronous web server. Live kinematics are serialized to JSON over REST endpoints and rendered on an HTML/JS field telemetry UI.Automated Launch Interlocks: Implements a strict hardware-and-software safety state machine. Arming toggle switches, visual LEDs, and audible piezo tones prevent accidental triggers. Once armed and above the target takeoff speed threshold ($10\text{ m/s}$), the firmware commands a high-torque servo to release the parallel linkage and latch the exact takeoff distance.Full Documentation: For the complete breakdown of code iterations, state machines, and signal processing logic, see the Firmware Architecture Documentation.
+The trolley's control system runs on an onboard ESP32 microcontroller, governing real-time telemetry processing, field monitoring, and automated launch safety interlocks.
+
+* **Non-Blocking Speed Tracking:** Uses hardware interrupts to measure microsecond pulse intervals from a wheel-mounted Hall effect sensor. Speed calculations are mathematically filtered to eliminate ground vibration noise, with a 0.5-second timeout to automatically clear stale speed readings when coming to a stop.
+* **Off-Grid Telemetry Web Dashboard:** The ESP32 broadcasts a local Wi-Fi signal hosting a live HTML interface. Ground crew can connect via smartphone to view live speed, acceleration, and take-off distance without relying on external internet or ground control stations.
+* **Fail-Safe Release Interlock:** To prevent accidental drops, the parallel linkage release servo will only trigger when three independent conditions are met simultaneously:
+  1. The master arming switch is flipped ON (confirmed via status LED and audible buzzer).
+  2. The cart reaches the target $18\text{ m/s}$ take-off speed threshold.
+  3. The aircraft lifts off, un-weighting the cradle's physical limit switch.
+
+> **Full Firmware Breakdown:** For a complete look at the state machines, filtering logic, and code structure, see the [Firmware Architecture Documentation](firmware/README.md).
 
 ---
 
@@ -126,11 +136,16 @@ Although designed around a specific 2.43 kg fixed-wing SAR airframe, the modular
 ---
 ## Repository structure
 ```text
-├── Media # Picture and renders of final product
-├── Firmware
+
 ├── CAD/
-│   ├── Trolley_Assembly.step # Full mechanical cart assembly
-│   ├── Linkage_Arm.stl       # 3D printable parallel linkage support
-│   └── Wheel_Magnet_Hub.stl  # Custom wheel hub with embedded magnet recess
+│   └── Launch Trolley.step     # Full mechanical cart assembly
+│
+├── Firmware/
+│   ├── Complete_System.ino     # Code
+│   └── README.md     # Deep dive into code
+│
+├── Media/
+│   └── README.md     # Pictures and renders of final product
+│
 └── README.md
 ```
