@@ -35,6 +35,10 @@ The sensing suite consists of two primary inputs designed to feed the onboard ki
 
 For field operation and ground crew safety, the human-machine interface incorporates a heavy-duty mechanical arming toggle switch, a visual status LED, and an audible piezo buzzer. Recognizing that bright outdoor sunlight and high-glare field environments can easily obscure visual LED feedback during launch operations, I integrated a buzzer that provides unambiguous audible confirmation when the trolley is armed. This dual-sensory confirmation guarantees that ground operators can definitively verify the system's state before initiating a high-speed take-off run.
 
+---
+## Firmware & Embedded Systems Overview
+
+The trolley's control system runs on an ESP32, governing real-time telemetry, human-machine safety interlocks, and automated release actuation. Using an AI-augmented engineering workflow to rapidly scaffold and iterate on firmware, I developed a modular, fail-safe architecture: Real-Time Telemetry Pipeline: Processes high-frequency wheel rotation data using microsecond hardware interrupts (IRAM_ATTR). Signal noise is mitigated using an exponential moving average (EMA) velocity filter ($\alpha = 0.2$) paired with an acceleration clamp ($\pm 20\text{ m/s}^2$).Standalone Web Dashboard: Configures the ESP32 as a Wi-Fi Access Point hosting an asynchronous web server. Live kinematics are serialized to JSON over REST endpoints and rendered on an HTML/JS field telemetry UI.Automated Launch Interlocks: Implements a strict hardware-and-software safety state machine. Arming toggle switches, visual LEDs, and audible piezo tones prevent accidental triggers. Once armed and above the target takeoff speed threshold ($10\text{ m/s}$), the firmware commands a high-torque servo to release the parallel linkage and latch the exact takeoff distance.Full Documentation: For the complete breakdown of code iterations, state machines, and signal processing logic, see the Firmware Architecture Documentation.
 
 ---
 
