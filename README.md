@@ -122,6 +122,7 @@ Although designed around a specific 2.43 kg fixed-wing SAR airframe, the modular
 ---
 ## Repository structure
 ```text
+├── Media # Picture and renders of final product
 ├── Firmware
 ├── CAD/
 │   ├── Trolley_Assembly.step # Full mechanical cart assembly
