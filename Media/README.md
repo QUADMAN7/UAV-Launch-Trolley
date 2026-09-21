@@ -1,3 +1,4 @@
+This file contains pictures of the final product.
 <img width="4000" height="3000" alt="20260907_122130" src="https://github.com/user-attachments/assets/17b6ba22-3d45-4bf2-80e5-05f5a7accf63" />
 <img width="4000" height="3000" alt="20260907_122211" src="https://github.com/user-attachments/assets/f2a04c44-cd09-411a-b69d-630fe5750ffd" />
 <img width="4000" height="3000" alt="20260907_122357" src="https://github.com/user-attachments/assets/effb06dd-aa05-452f-95d7-779ef4b92673" />
