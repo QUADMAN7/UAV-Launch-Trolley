@@ -1,53 +1,59 @@
-## Firmware Architecture & Software Development Strategy
+# Firmware Architecture & Control Logic
 
-To develop a robust, field-ready control system for the trolley, I adopted an iterative, modular software engineering strategy. Rather than attempting to write a monolithic codebase from scratch, I systematically built, tested, and validated individual subsystems—first isolating real-time telemetry processing, then developing safety-critical actuation state machines, and finally fusing them into a unified firmware architecture. Leveraging modern AI-augmented engineering workflows, I used AI tools as a virtual pair-programmer to rapidly scaffold syntax, boilerplate Wi-Fi server code, and HTML dashboard layouts. This human-in-the-loop approach drastically accelerated development velocity, allowing me to concentrate my engineering efforts on control logic optimization, signal filtering, hardware safety interlocks, and empirical hardware-in-the-loop (HIL) validation.
+## 1. System Intent & Engineering Strategy
+The primary function of the trolley firmware is to provide real-time launch telemetry and govern the automated release mechanism for the UAV. To ensure safe, reliable operations in field environments, the software architecture was designed around three core principles:
 
-### Phase 1: Kinematics & Real-Time Telemetry Pipeline
+1. **Non-blocking Telemetry:** Measure vehicle speed, displacement, and acceleration continuously without stopping the main control loop.
+2. **Fail-Safe Safety Interlocks:** Prevent premature mechanical actuation through a combination of physical hardware states and firmware logic gates.
+3. **Zero-Infrastructure Monitoring:** Broadcast live flight metrics directly to operators without relying on external Wi-Fi networks or bulky ground control equipment.
 
-Development began by establishing a high-frequency telemetry pipeline to accurately measure cart displacement, velocity, and acceleration. Running on the ESP32, the initial firmware utilized hardware interrupts (IRAM_ATTR) bound to a Hall effect sensor to measure microsecond-level rotational periods between wheel-mounted magnets. To ensure reliable real-time calculations, I implemented a 1 ms software debounce window alongside a 0.5-second pulse timeout mechanism to prevent stale speed readings when coming to a complete stop.Raw sensor data from high-speed rotation is inherently noisy; to address this, I integrated an exponential moving average (EMA) filter ($\alpha = 0.2$) to smooth velocity calculations before numerical integration into displacement. Furthermore, I implemented an acceleration clamp ($\pm 20 \text{ m/s}^2$) to eliminate mathematical spikes caused by discrete pulse timing. To make this data actionable in the field without external network infrastructure, I configured the ESP32 as a standalone Wi-Fi SoftAP hosting an asynchronous web server. This server dynamically served a lightweight HTML/JavaScript dashboard, serving live JSON telemetry over HTTP REST endpoints so ground operators could monitor vehicle performance in real time from any mobile device.
+---
 
-```text
-+-------------------------------------------------------------------------------+
-|                             ESP32 FIRMWARE PIPELINE                           |
-|                                                                               |
-|  +--------------------+      +--------------------+      +-----------------+  |
-|  | Hall Effect Sensor | ---> | Hardware Interrupt | ---> | Microsecond     |  |
-|  | (Pulse Detection)  |      | (IRAM_ATTR ISR)    |      | Period Tracking |  |
-|  +--------------------+      +--------------------+      +-----------------+  |
-|                                                                   |           |
-|                                                                   v           |
-|  +--------------------+      +--------------------+      +-----------------+  |
-|  | ESP32 SoftAP       | <--- | Exponential        | <--- | Velocity & Accel|  |
-|  | Web Telemetry UI   |      | Smoothing Filter   |      | Calculation     |  |
-|  +--------------------+      +--------------------+      +-----------------+  |
-+-------------------------------------------------------------------------------+
+## 2. Telemetry & Signal Processing
+
+### Interrupt-Driven Kinematics
+To capture high-speed wheel rotations accurately, wheel pulse detection is handled via hardware interrupts (`IRAM_ATTR`). Measuring microsecond intervals (`micros()`) between pulse triggers provides higher accuracy than polling the pin in the main loop.
+
+### Noise Mitigation & Filtering
+Raw velocity calculations from small-diameter wheels are inherently prone to mechanical vibration and pulse jitter. To deliver stable control inputs and clean UI visualization, the firmware processes raw sensor signals through two stages:
+
+* **Exponential Moving Average (EMA) Filter:** Smooths transient velocity spikes using a weighting factor ($\alpha = 0.2$). This prioritizes trend stability while retaining low latency for rapid acceleration runs.
+* **Dynamic Clamping:** Physical acceleration values are clamped within physical bounds ($\pm 20\text{ m/s}^2$) to eliminate erroneous mathematical noise spikes during rapid signal state changes.
+* **Zero-Speed Timeout:** To prevent stale telemetry output when the trolley stops, a $0.5\text{-second}$ pulse timeout automatically resets velocity to zero if no new magnet pulses are registered.
+
+---
+
+## 3. Safety Interlocks & Release State Machine
+
+Accidental release of the parallel linkage during pre-flight handling poses a direct hazard to the airframe and ground crew. To eliminate single-point failures, mechanical release requires three independent conditions to be satisfied simultaneously:
+``` text
+[ Hardware Arm Switch: ON ] ──┐
+├─► [ Logical AND Gate ] ──► [ Command Servo Release ]
+[ Weight-Off-Wheels: HIGH ]  ──┤
+│
+[ Launch Speed >= 18 m/s ]   ──┘
 ```
 
-### Phases 2 & 3: Safety Interlocks & Actuation Prototyping
+1. **Master Physical Arming Switch:** Mechanically isolates the system. When disarmed, the servo is held rigidly at $190^\circ$ (latching the linkage), regardless of sensor inputs.
+2. **Audible & Visual State Feedback:** Upon arming, the ESP32 drives an LED and fires a piezo buzzer tone to alert field operators.
+3. **Automated Velocity Threshold:** The release servo ($0^\circ$) will only trigger once smoothed ground velocity meets or exceeds the minimum flight speed ($18\text{ m/s}$) AND the weight-off-wheels sensor indicates the aircraft is lifting.
 
-In parallel, I developed the physical safety and release state machines across secondary prototypes to validate hardware interlocks. The primary objective was to eliminate accidental actuation risks during pre-flight handling. I implemented a strict hardware hierarchy: a heavy-duty mechanical arming switch was configured as a master gate, requiring physical engagement before any servo commands could be processed.To provide unambiguous human-machine feedback, engaging the arming switch drove an onboard status LED and triggered an audible piezo buzzer tone to alert ground crew in bright sunlight conditions. System actuation was governed by a 555-style pulse-width control using an analog servo. When disarmed, the control loop locked the servo at $190^\circ$ (holding the linkage latch); once armed and triggered by the weight-off-wheels limit switch, the servo swept to $0^\circ$, releasing the mechanical claw under elastomeric tension.
+Upon successful release, the firmware latches the current displacement value to permanently record the total ground roll distance required for take-off.
 
-### Phase 4: Full System Integration & Automated Launch Logic
+---
 
-The final engineering stage brought kinematics, web networking, and physical interlocks into a single integrated firmware build. The unified software continuously evaluates vehicle dynamics against automated launch criteria.
+## 4. Off-Grid Field User Interface
+To eliminate the need for heavy ground station laptops, the ESP32 acts as a standalone Wi-Fi network hosting a HTTP web server. 
 
-```text
-                                  [ SYSTEM DISARMED ]
-                                           |
-                                  (Arm Switch Flipped)
-                                           v
-                                   [ SYSTEM ARMED ]
-                             (LED ON / Audible Buzzer Tone)
-                                           |
-                +--------------------------+--------------------------+
-                |                                                     |
-    (Speed < 10 m/s OR Button Held)                        (Speed >= 10 m/s AND
-                |                                            Button Released)
-                v                                                     v
-    [ Maintain Holding State ]                             [ AUTOMATED LAUNCH ]
-      (Servo at 190 degrees)                               - Servo Sweeps to 0 degrees
-                                                           - Capture Take-off Distance
-                                                           - Visual UI Alert Flashes
-```
+* The server delivers a single lightweight HTML/JS dashboard to connected mobile devices.
+* Kinematic state data (`displacement`, `velocity`, `acceleration`, `takeOffDistance`) are packaged as lightweight JSON text and served at a `/data` web address that the browser reads automatically
+* Client-side JavaScript polls this endpoint asynchronously every $200\text{ ms}$, delivering real-time numerical visual readouts without triggering full page reloads.
 
-Under full system integration, the ESP32 constantly monitors whether the system is armed, whether the weight-off-wheels button has been released, and whether the smoothed velocity has crossed a predefined launch threshold (e.g., 10 m/s). Only when all conditions are simultaneously satisfied does the firmware command the servo to release, instantly dropping the parallel linkage flat. Upon successful release, the code latches the exact displacement value to record the true take-off run distance, pushing this metric to the live web UI alongside a visual alert. If the system is disarmed at any point, the servo automatically resets to its safe holding position, guaranteeing predictable, repeatable, and fail-safe operation during field testing.
+---
+
+## 5. Prototype Trade-Offs & Production Enhancements
+
+As an initial functional prototype, the system successfully validated automated launch mechanics in bench testing. For future production iterations, before conducting a real world test, the following software enhancements are planned:
+
+* **Non-Volatile Logging:** Integrate SD card logging to store historical run data locally for post-flight telemetry analysis.
+* **Dynamic Speed Calibration:** Allow operators to adjust the threshold launch speed directly from the web interface prior to arming, eliminating the need to re-flash firmware for different airframes.
