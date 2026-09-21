@@ -3,7 +3,7 @@
 #include <ESP32Servo.h>
 
 // Hardware config
-#define HALL_SENSOR_PIN 20  // Your hall sensor pin
+#define HALL_SENSOR_PIN 20  // Hall sensor pin
 #define ARM_SWITCH_PIN 9    // Arm switch
 #define ARM_LED_PIN 4       // Arm LED
 #define BUTTON_PIN 5        // Momentary switch
@@ -26,7 +26,7 @@ bool takeOffRecorded = false;
 
 unsigned long prevMicros = 0;
 
-const float LAUNCH_SPEED = 10;  // m/s launch speed threshold
+const float LAUNCH_SPEED = 18;  // m/s launch speed threshold
 const unsigned long VELOCITY_TIMEOUT_US = 500000; // 0.5 seconds timeout for velocity zero
 
 bool systemArmed = false;
@@ -221,7 +221,7 @@ void setup() {
   server.begin();
 
   myServo.attach(SERVO_PIN, 500, 2500);
-  myServo.write(190);  // Default servo position (disarmed)
+  myServo.write(190);  // Default servo position (Locked)
 }
 
 #define ACCELERATION_CLAMP 20.0  // Max abs acceleration allowed (m/s²)
@@ -241,7 +241,7 @@ void loop() {
   unsigned long currentMicros = micros();
   float dt = (currentMicros - prevMicros) / 1e6;
 
-  if (dt < 0.0001) return; // ignore unrealistically small dt
+  if (dt < 0.0001) return; // ignore unrealistically small dt 
 
   if (dt > 0.001) {
     prevMicros = currentMicros;
@@ -250,7 +250,7 @@ void loop() {
 
     if (timeSinceLastPulse > VELOCITY_TIMEOUT_US) { // Timeout => wheel stopped
       velocity = 0.0;
-    } else if (period > 0 && period < 1000000) { // ignore absurd period > 1s
+    } else if (period > 0 && period < 1000000) { // ignore period > 1s
       float timeForOneRevolution = (period * NUM_MAGNETS) / 1e6;
       velocity = CIRCUMFERENCE / timeForOneRevolution;
     } else {
