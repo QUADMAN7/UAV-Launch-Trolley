@@ -57,7 +57,7 @@ For field operation and ground crew safety, the human-machine interface incorpor
   2. The cart reaches or exceeds the target 18m/s take-off speed threshold.
   3. The aircraft lifts off, un-weighting the cradle's physical limit switch.
 
-> **Full Firmware Breakdown:** For a complete look at the state machines, filtering logic, and code structure, see the [Firmware Architecture Documentation](firmware/README.md).
+> **Full Firmware Breakdown:** For a complete look at the state machines, filtering logic, and code structure, see the [Firmware Architecture Documentation](Firmware/README.md).
 
 ---
 
